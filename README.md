@@ -159,6 +159,3 @@ setup.bat / setup.sh  One-click setup
 build.bat / Makefile / CMakeLists.txt
 ```
 
-## License
-
-MIT. See [LICENSE](LICENSE).
