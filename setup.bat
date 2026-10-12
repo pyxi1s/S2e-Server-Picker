@@ -145,15 +145,25 @@ set "EXE=build\deadlock-server-picker.exe"
 if exist "build\Release\deadlock-server-picker.exe" set "EXE=build\Release\deadlock-server-picker.exe"
 for %%I in ("%EXE%") do set "EXE_FULL=%%~fI"
 
+set "INSTALL_DIR=C:\deadlock_server_picker"
+echo.
+echo Installing to %INSTALL_DIR%...
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+copy /y "%EXE_FULL%" "%INSTALL_DIR%\deadlock-server-picker.exe" >nul
+if errorlevel 1 goto fail_install
+copy /y uninstall.bat "%INSTALL_DIR%\uninstall.bat" >nul
+set "EXE=%INSTALL_DIR%\deadlock-server-picker.exe"
+
 echo.
 echo Creating Desktop and Start Menu shortcuts...
-powershell -NoProfile -ExecutionPolicy Bypass -File "tools\create_shortcuts.ps1" -Exe "%EXE_FULL%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "tools\create_shortcuts.ps1" -Exe "%EXE%"
 if errorlevel 1 echo       [warn] Could not create shortcuts.
 
 echo.
 echo ============================================================
 echo   Done! Program: %EXE%
 echo   It asks for administrator rights itself (UAC prompt).
+echo   To uninstall: %INSTALL_DIR%\uninstall.bat
 echo ============================================================
 choice /c YN /m "Launch now"
 if errorlevel 2 goto done
@@ -200,6 +210,11 @@ goto fail_end
 :fail_ftxui
 echo.
 echo [ERROR] Could not download FTXUI. Check your internet connection and run setup.bat again.
+goto fail_end
+
+:fail_install
+echo.
+echo [ERROR] Could not copy files to %INSTALL_DIR%. Close the program if it is running and try again.
 goto fail_end
 
 :fail_build

@@ -125,6 +125,19 @@ int main(int argc, char** argv) {
         log(LogLevel::Warning,
             "Ping disabled: no real server IPs yet. Run: python3 tools/update_servers.py --write");
     }
+    {
+        const auto blocked = firewall.QueryBlocked(regions);
+        size_t blocked_count = 0;
+        for (size_t i = 0; i < regions.size(); ++i) {
+            if (!blocked[i]) continue;
+            allowed[i] = false;
+            monitor.SetBlocked(i, true);
+            ++blocked_count;
+        }
+        if (blocked_count > 0) {
+            log(LogLevel::Info, std::to_string(blocked_count) + " location(s) are already blocked by existing rules.");
+        }
+    }
     log(LogLevel::Info, "Click Allow/Block to toggle. Press 'Apply Rules' to commit.");
 
     Components toggles;

@@ -104,6 +104,25 @@ OperationResult UnblockImpl(const Region& r) {
     return {true, "allowed (rules removed)"};
 }
 
+std::vector<bool> QueryBlockedImpl(const std::vector<Region>& regions) {
+    std::vector<bool> blocked(regions.size(), false);
+    const auto res = RunCommand("netsh advfirewall firewall show rule name=all dir=out");
+    if (res.exit_code != 0) return blocked;
+    for (size_t i = 0; i < regions.size(); ++i) {
+        const std::string needle = RuleName(regions[i]);
+        size_t pos = 0;
+        while ((pos = res.output.find(needle, pos)) != std::string::npos) {
+            const size_t end = pos + needle.size();
+            if (end >= res.output.size() || res.output[end] == '\r' || res.output[end] == '\n') {
+                blocked[i] = true;
+                break;
+            }
+            pos = end;
+        }
+    }
+    return blocked;
+}
+
 #elif defined(__linux__)
 
 std::string ChainName(const Region& r) {
@@ -151,6 +170,25 @@ OperationResult UnblockImpl(const Region& r) {
     if (probe.exit_code != 0) return {false, "iptables not available: " + probe.output};
     RemoveChain(ChainName(r));
     return {true, "allowed (chain removed)"};
+}
+
+std::vector<bool> QueryBlockedImpl(const std::vector<Region>& regions) {
+    std::vector<bool> blocked(regions.size(), false);
+    const auto res = RunCommand("iptables -w -S OUTPUT");
+    if (res.exit_code != 0) return blocked;
+    for (size_t i = 0; i < regions.size(); ++i) {
+        const std::string needle = "-j " + ChainName(regions[i]);
+        size_t pos = 0;
+        while ((pos = res.output.find(needle, pos)) != std::string::npos) {
+            const size_t end = pos + needle.size();
+            if (end >= res.output.size() || res.output[end] == '\r' || res.output[end] == '\n') {
+                blocked[i] = true;
+                break;
+            }
+            pos = end;
+        }
+    }
+    return blocked;
 }
 
 #elif defined(__APPLE__)
@@ -215,6 +253,15 @@ OperationResult UnblockImpl(const Region& r) {
     const auto res = RunCommand("pfctl -a \"" + AnchorName(r) + "\" -F rules");
     if (res.exit_code != 0) return {true, "allowed (nothing to remove)"};
     return {true, "allowed (anchor flushed)"};
+}
+
+std::vector<bool> QueryBlockedImpl(const std::vector<Region>& regions) {
+    std::vector<bool> blocked(regions.size(), false);
+    for (size_t i = 0; i < regions.size(); ++i) {
+        const auto res = RunCommand("pfctl -a \"" + AnchorName(regions[i]) + "\" -sr");
+        blocked[i] = res.exit_code == 0 && res.output.find("block") != std::string::npos;
+    }
+    return blocked;
 }
 
 #endif
@@ -333,6 +380,15 @@ OperationResult FirewallManager::UnblockRegion(const Region& region) {
 #else
     (void)region;
     return {false, "This operating system is not supported"};
+#endif
+}
+
+std::vector<bool> FirewallManager::QueryBlocked(const std::vector<Region>& regions) {
+#if DSP_SUPPORTED
+    if (!IsElevated()) return std::vector<bool>(regions.size(), false);
+    return QueryBlockedImpl(regions);
+#else
+    return std::vector<bool>(regions.size(), false);
 #endif
 }
 

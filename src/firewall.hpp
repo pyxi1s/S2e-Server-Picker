@@ -25,6 +25,7 @@ public:
     OperationResult BlockRegion(const Region& region);
     OperationResult UnblockRegion(const Region& region);
     OperationResult ResetAll(const std::vector<Region>& regions);
+    std::vector<bool> QueryBlocked(const std::vector<Region>& regions);
 };
 
 }

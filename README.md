@@ -50,6 +50,25 @@ Options: `--run` launches the app after building, `--no-run` never asks, `--skip
 
 On Linux the script installs dependencies for Debian/Ubuntu, Fedora/RHEL, Arch and openSUSE. On macOS it needs the Xcode Command Line Tools and, if CMake is missing, Homebrew.
 
+### Install location and shortcuts (Windows)
+
+`setup.bat` copies the built program to `C:\deadlock_server_picker`, so it keeps working even if you delete the source folder. It also creates a **Deadlock Server Picker** shortcut on the Desktop and in the Start Menu. Both point to the installed program, are set to run as administrator and open in Windows Terminal when it is installed. To create them again later:
+
+```bat
+powershell -ExecutionPolicy Bypass -File tools\create_shortcuts.ps1 -Exe C:\deadlock_server_picker\deadlock-server-picker.exe
+```
+
+### Uninstall (Windows)
+
+Run `C:\deadlock_server_picker\uninstall.bat` (or `uninstall.bat` from the source folder). It asks for administrator rights, then:
+
+- stops the program if it is running
+- removes every firewall rule created by this app (`DeadlockServerPicker_*`)
+- removes the Desktop and Start Menu shortcuts
+- deletes `C:\deadlock_server_picker`
+
+The source folder is not touched. On Linux and macOS there is no installer: use **Reset All Rules** in the app, then delete the folder.
+
 ## Manual build
 
 ```sh
@@ -75,14 +94,6 @@ cmake --build build
 ```
 
 The binary is `build/deadlock-server-picker` (or `build\Release\deadlock-server-picker.exe` with Visual Studio).
-
-### Shortcuts (Windows)
-
-`setup.bat` creates a **Deadlock Server Picker** shortcut on the Desktop and in the Start Menu. Both are set to run as administrator and open in Windows Terminal when it is installed. To create them again later, for example after moving the build:
-
-```bat
-powershell -ExecutionPolicy Bypass -File tools\create_shortcuts.ps1 -Exe build\Release\deadlock-server-picker.exe
-```
 
 ## Getting real server IPs
 
@@ -156,6 +167,6 @@ tools/
   update_servers.py       Fetches relay IPs and rewrites servers.hpp
   create_shortcuts.ps1    Creates the Desktop and Start Menu shortcuts (Windows)
 setup.bat / setup.sh  One-click setup
+uninstall.bat         Windows uninstaller
 build.bat / Makefile / CMakeLists.txt
 ```
-
