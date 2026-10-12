@@ -23,7 +23,7 @@ East Asia(EA)
 
 ## Requirements
 
-- Administrator rights (Windows) or root (Linux/macOS). The app asks for them itself: a UAC prompt on Windows, `sudo` on Linux/macOS.
+- Administrator rights (Windows) or root (Linux/macOS). The app asks for them itself: a UAC prompt on Windows, `sudo` on Linux/macOS. On Windows the elevated copy opens in a new Windows Terminal window if `wt.exe` is installed, otherwise in a regular console window.
 - A C++17 compiler, CMake 3.14+ and Git to build from source
 - Python 3 to fetch the real server IPs
 - `iptables` and `ping` on Linux
@@ -149,3 +149,7 @@ tools/
 setup.bat / setup.sh  One-click setup
 build.bat / Makefile / CMakeLists.txt
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).

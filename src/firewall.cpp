@@ -266,6 +266,21 @@ bool FirewallManager::RelaunchElevated(int argc, char** argv) {
     if (len == 0 || len >= path.size()) return false;
     path.resize(len);
 
+    wchar_t wt_path[MAX_PATH];
+    const DWORD wt_len = SearchPathW(nullptr, L"wt.exe", nullptr, MAX_PATH, wt_path, nullptr);
+    if (wt_len > 0 && wt_len < MAX_PATH) {
+        const std::wstring params =
+            L"new-tab --title \"Deadlock Server Picker\" \"" + path + L"\"";
+        SHELLEXECUTEINFOW wt{};
+        wt.cbSize = sizeof(wt);
+        wt.lpVerb = L"runas";
+        wt.lpFile = wt_path;
+        wt.lpParameters = params.c_str();
+        wt.nShow = SW_SHOWNORMAL;
+        if (ShellExecuteExW(&wt) == TRUE) return true;
+        if (GetLastError() == ERROR_CANCELLED) return false;
+    }
+
     SHELLEXECUTEINFOW info{};
     info.cbSize = sizeof(info);
     info.lpVerb = L"runas";
