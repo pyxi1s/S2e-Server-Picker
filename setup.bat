@@ -143,6 +143,12 @@ if errorlevel 1 goto fail_build
 
 set "EXE=build\deadlock-server-picker.exe"
 if exist "build\Release\deadlock-server-picker.exe" set "EXE=build\Release\deadlock-server-picker.exe"
+for %%I in ("%EXE%") do set "EXE_FULL=%%~fI"
+
+echo.
+echo Creating Desktop and Start Menu shortcuts...
+powershell -NoProfile -ExecutionPolicy Bypass -File "tools\create_shortcuts.ps1" -Exe "%EXE_FULL%"
+if errorlevel 1 echo       [warn] Could not create shortcuts.
 
 echo.
 echo ============================================================
