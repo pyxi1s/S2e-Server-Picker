@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
     const bool elevated = dsp::FirewallManager::IsElevated();
 
     std::deque<bool> allowed(regions.size(), true);
+    std::deque<bool> applied(regions.size(), true);  // state last written to the firewall
     std::vector<LogEntry> logs;
 
     auto log = [&](LogLevel level, const std::string& text) {
@@ -131,6 +132,7 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < regions.size(); ++i) {
             if (!blocked[i]) continue;
             allowed[i] = false;
+            applied[i] = false;
             monitor.SetBlocked(i, true);
             ++blocked_count;
         }
@@ -140,8 +142,33 @@ int main(int argc, char** argv) {
     }
     log(LogLevel::Info, "Click Allow/Block to toggle. Press 'Apply Rules' to commit.");
 
+    auto group_all_allowed = [&allowed](const std::vector<size_t>& members) {
+        return std::all_of(members.begin(), members.end(), [&](size_t j) { return allowed[j]; });
+    };
+
     Components toggles;
+    Components ordered;  // focus order: group button, then its locations
+    Components group_button_at(regions.size());
     for (size_t i = 0; i < regions.size(); ++i) {
+        if (i == 0 || regions[i].group != regions[i - 1].group) {
+            std::vector<size_t> members;
+            for (size_t j = i; j < regions.size() && regions[j].group == regions[i].group; ++j) {
+                members.push_back(j);
+            }
+            ButtonOption gopt;
+            gopt.transform = [group_all_allowed, members](const EntryState& state) {
+                Element e = text(group_all_allowed(members) ? " Block all " : " Allow all ") | bold |
+                            color(Color::Cyan);
+                if (state.focused) e = e | inverted;
+                return e;
+            };
+            auto gbtn = Button("", [&allowed, group_all_allowed, members] {
+                const bool block = group_all_allowed(members);
+                for (size_t j : members) allowed[j] = !block;
+            }, gopt);
+            group_button_at[i] = gbtn;
+            ordered.push_back(gbtn);
+        }
         ButtonOption opt;
         opt.transform = [&allowed, i](const EntryState& state) {
             const bool a = allowed[i];
@@ -150,8 +177,9 @@ int main(int argc, char** argv) {
             return e;
         };
         toggles.push_back(Button("", [&allowed, i] { allowed[i] = !allowed[i]; }, opt));
+        ordered.push_back(toggles.back());
     }
-    auto region_list = Container::Vertical(toggles);
+    auto region_list = Container::Vertical(ordered);
 
     auto on_apply = [&] {
         if (!elevated) {
@@ -165,7 +193,10 @@ int main(int argc, char** argv) {
             const auto& r = regions[i];
             const auto res = allowed[i] ? firewall.UnblockRegion(r) : firewall.BlockRegion(r);
             log(res.ok ? LogLevel::Success : LogLevel::Error, r.name + ": " + res.message);
-            if (res.ok) monitor.SetBlocked(i, !allowed[i]);
+            if (res.ok) {
+                monitor.SetBlocked(i, !allowed[i]);
+                applied[i] = allowed[i];
+            }
             (res.ok ? ok : failed)++;
         }
         log(failed == 0 ? LogLevel::Success : LogLevel::Warning,
@@ -183,11 +214,50 @@ int main(int argc, char** argv) {
         log(res.ok ? LogLevel::Success : LogLevel::Error, res.message);
         if (res.ok) {
             for (auto& a : allowed) a = true;
+            for (auto& a : applied) a = true;
             for (size_t i = 0; i < regions.size(); ++i) monitor.SetBlocked(i, false);
         }
     };
 
+    auto set_all = [&](bool value) {
+        for (auto& a : allowed) a = value;
+        log(LogLevel::Info, std::string(value ? "All locations set to Allow" : "All locations set to Block") +
+                                ". Press 'Apply Rules' to commit.");
+    };
+
+    auto best_only = [&] {
+        int best_i = -1;
+        double best_ms = 0.0;
+        size_t blocked_unmeasured = 0;
+        for (size_t i = 0; i < regions.size(); ++i) {
+            const auto p = monitor.Get(i);
+            if (p.status == dsp::PingResult::Status::Blocked) ++blocked_unmeasured;
+            if (p.status != dsp::PingResult::Status::Ok) continue;
+            if (best_i < 0 || p.ms < best_ms) {
+                best_i = static_cast<int>(i);
+                best_ms = p.ms;
+            }
+        }
+        if (best_i < 0) {
+            log(LogLevel::Warning, "Best Only: no ping results yet, nothing changed.");
+            return;
+        }
+        for (size_t i = 0; i < regions.size(); ++i) allowed[i] = (static_cast<int>(i) == best_i);
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "%.0f", best_ms);
+        log(LogLevel::Info, "Best Only: " + regions[static_cast<size_t>(best_i)].name + " (" + buf +
+                                "ms) allowed, all others set to Block. Press 'Apply Rules' to commit.");
+        if (blocked_unmeasured > 0) {
+            log(LogLevel::Warning,
+                "Locations blocked by this app are not pinged, so they were not compared. "
+                "Use Allow All + Apply Rules first to compare every location.");
+        }
+    };
+
     auto buttons = Container::Horizontal({
+        Button("Block All", [&] { set_all(false); }),
+        Button("Allow All", [&] { set_all(true); }),
+        Button("Best Only", best_only),
         Button("Apply Rules", on_apply),
         Button("Reset All Rules", on_reset),
         Button("Quit", screen.ExitLoopClosure()),
@@ -204,6 +274,10 @@ int main(int argc, char** argv) {
         if (event == Event::Character('q') || event == Event::Character('Q')) {
             screen.Exit();
             return true;
+        }
+        // Space acts like Enter on the focused button
+        if (event == Event::Character(' ')) {
+            return root->OnEvent(Event::Return);
         }
         return false;
     });
@@ -231,16 +305,31 @@ int main(int argc, char** argv) {
             const auto& r = regions[i];
             if (r.group != current_group) {
                 current_group = r.group;
-                rows.push_back(text(" " + r.group) | bold);
+                Element header = text(" " + r.group) | bold | flex;
+                rows.push_back(group_button_at[i] ? hbox({header, group_button_at[i]->Render()})
+                                                  : header);
             }
             const PingLabel ping = FormatPing(pings[i], static_cast<int>(i) == best);
+            const bool pending = allowed[i] != applied[i];
             Element row = hbox({
                 text("    " + r.name) | flex,
+                text(pending ? "(pending) " : "") | color(Color::Yellow) | size(WIDTH, EQUAL, 10),
                 text(" " + ping.text + " ") | color(ping.color) | size(WIDTH, EQUAL, 11),
                 toggles[i]->Render(),
             });
             rows.push_back(row);
         }
+
+        size_t pending_count = 0;
+        for (size_t i = 0; i < regions.size(); ++i) {
+            if (allowed[i] != applied[i]) ++pending_count;
+        }
+        Element pending_line =
+            pending_count > 0
+                ? text(" " + std::to_string(pending_count) +
+                       " unapplied change(s) - press 'Apply Rules' ") |
+                      color(Color::Yellow) | bold | hcenter
+                : text("");
 
         Elements log_lines;
         for (size_t i = 0; i < logs.size(); ++i) {
@@ -273,6 +362,7 @@ int main(int argc, char** argv) {
                        vbox(std::move(log_lines)) | vscroll_indicator | yframe | flex) |
                     flex,
             }) | flex,
+            pending_line,
             hbox({buttons->Render() | hcenter, filler()}) | center,
             text(" Arrows/Tab: navigate   Space/Enter: toggle/press   q: quit ") | dim | hcenter,
         });

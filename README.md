@@ -15,8 +15,10 @@ East Asia(EA)
 ## Features
 
 - Locations grouped by region (Southeast Asia, East Asia, North America, Europe, South America, Oceania)
-- Per-location Allow / Block toggle
-- Live ping for every location, refreshed every ~2 seconds; `*` marks the lowest ping
+- Per-location Allow / Block toggle, plus a per-region "Block all / Allow all" button on each region header
+- **Block All**, **Allow All** and **Best Only** (allow only the lowest-ping location) buttons
+- Locations whose choice differs from what is applied are marked `(pending)`
+- Live ping for every location, refreshed every ~2 seconds and averaged over the last 5 replies; `*` marks the lowest ping
 - Activity log showing what was applied and any errors
 - Works on Windows (`netsh`), Linux (`iptables`) and macOS (`pfctl`)
 - Only touches rules it created itself, and can remove them all with one button
@@ -122,15 +124,20 @@ To add or remove locations, edit the `GROUPS` list at the top of `tools/update_s
 | Up / Down, Tab | Move between locations and buttons |
 | Mouse wheel | Move up / down the list |
 | Click, Enter or Space on `Allow` / `Block` | Toggle that location |
+| Region header `Block all` / `Allow all`    | Toggle every location in that region                                   |
+| **Block All** / **Allow All**              | Set every location to Block / Allow (still needs Apply Rules)          |
+| **Best Only**                              | Allow only the lowest-ping location, block the rest                    |
 | **Apply Rules** | Write the current choices to the firewall |
 | **Reset All Rules** | Remove every rule this app created and set all locations back to Allow |
 | **Quit** or `q` | Exit |
 
 Toggling only changes the selection. Nothing reaches the firewall until you press **Apply Rules**.
 
+**Best Only** can only compare locations that are currently pinged. Locations blocked by this app are not measured, so run **Allow All** + **Apply Rules** first if you want every location compared.
+
 ## Ping
 
-Latency is measured with the system `ping` command (one ICMP echo per location per sweep, using up to 3 single-address relay IPs per location). A location shows:
+Latency is measured with the system `ping` command (one ICMP echo per location per sweep, using up to 3 single-address relay IPs per location). The displayed value is the average of the last 5 successful replies, and a single lost reply keeps the previous average instead of flashing `timeout`. A location shows:
 
 | Shown | Meaning |
 | --- | --- |

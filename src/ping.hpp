@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <deque>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -57,6 +58,8 @@ private:
     std::condition_variable cv_;
     std::vector<PingResult> results_;
     std::vector<char> blocked_;
+    std::vector<std::deque<double>> samples_;  // recent replies, for the moving average
+    std::vector<int> fails_;                   // consecutive timeouts
     std::atomic<bool> stop_{false};
     std::thread thread_;
 };

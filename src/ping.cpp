@@ -5,11 +5,15 @@
 #include <chrono>
 #include <cstdlib>
 #include <future>
+#include <numeric>
 
 #include "process.hpp"
 
 namespace dsp {
 namespace {
+
+// Number of recent replies averaged into the displayed latency.
+constexpr size_t kPingWindow = 5;
 
 bool IsIpv4Literal(const std::string& s) {
     if (s.empty() || s.size() > 15) return false;
@@ -100,7 +104,9 @@ PingMonitor::PingMonitor(std::vector<std::vector<std::string>> hosts_per_region,
     : hosts_(std::move(hosts_per_region)),
       on_update_(std::move(on_update)),
       results_(hosts_.size()),
-      blocked_(hosts_.size(), 0) {
+      blocked_(hosts_.size(), 0),
+      samples_(hosts_.size()),
+      fails_(hosts_.size(), 0) {
     for (size_t i = 0; i < hosts_.size(); ++i) {
         if (hosts_[i].empty()) results_[i].status = PingResult::Status::NoData;
     }
@@ -132,6 +138,8 @@ void PingMonitor::SetBlocked(size_t i, bool blocked) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (i >= blocked_.size()) return;
     blocked_[i] = blocked ? 1 : 0;
+    samples_[i].clear();
+    fails_[i] = 0;
     if (blocked) {
         results_[i].status = PingResult::Status::Blocked;
     } else if (results_[i].status == PingResult::Status::Blocked) {
@@ -167,9 +175,24 @@ void PingMonitor::Loop() {
             jobs.push_back(std::async(std::launch::async, [this, i] { return Measure(i); }));
         }
         for (size_t i = 0; i < jobs.size(); ++i) {
-            const PingResult r = jobs[i].get();
+            PingResult r = jobs[i].get();
             std::lock_guard<std::mutex> lock(mutex_);
-            if (!blocked_[i] || r.status == PingResult::Status::Blocked) results_[i] = r;
+            if (blocked_[i] && r.status != PingResult::Status::Blocked) continue;
+            auto& samples = samples_[i];
+            if (r.status == PingResult::Status::Ok) {
+                fails_[i] = 0;
+                samples.push_back(r.ms);
+                while (samples.size() > kPingWindow) samples.pop_front();
+                r.ms = std::accumulate(samples.begin(), samples.end(), 0.0) /
+                       static_cast<double>(samples.size());
+            } else if (r.status == PingResult::Status::Timeout && !samples.empty() &&
+                       ++fails_[i] < 2) {
+                continue;  // tolerate a single lost reply, keep showing the average
+            } else {
+                samples.clear();
+                fails_[i] = 0;
+            }
+            results_[i] = r;
         }
         if (on_update_) on_update_();
 
