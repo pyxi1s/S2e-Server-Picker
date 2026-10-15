@@ -1,7 +1,5 @@
 # Deadlock Server Picker
 
-**English** | [ไทย](README.th.md)
-
 Pick which Deadlock server locations you connect to, right from your terminal.
 
 It blocks or allows the game's relay IPs through your OS firewall and shows live ping for every location, so you can cut the laggy ones and keep the good one. No game files touched, no injection, just firewall rules.
