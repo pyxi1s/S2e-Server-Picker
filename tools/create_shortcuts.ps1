@@ -6,7 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Exe = (Resolve-Path -LiteralPath $Exe).Path
-$Name = "Deadlock Server Picker"
+$Name = "S2e Server Picker"
 $Wt = Get-Command wt.exe -ErrorAction SilentlyContinue
 
 if ($Wt) {
@@ -30,7 +30,7 @@ foreach ($Folder in $Folders) {
     $Link.Arguments = $Arguments
     $Link.WorkingDirectory = Split-Path -Parent $Exe
     $Link.IconLocation = "$Exe,0"
-    $Link.Description = "Block or allow Deadlock server locations"
+    $Link.Description = "Block or allow S2e server locations"
     $Link.Save()
 
     $Bytes = [System.IO.File]::ReadAllBytes($Path)

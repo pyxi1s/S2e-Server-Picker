@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableExtensions
-title Deadlock Server Picker - Uninstall
+title S2e Server Picker - Uninstall
 
-set "INSTALL_DIR=C:\deadlock_server_picker"
-set "APP_NAME=Deadlock Server Picker"
+set "INSTALL_DIR=C:\s2e_server_picker"
+set "APP_NAME=S2e Server Picker"
 
 net session >nul 2>&1
 if not errorlevel 1 goto elevated
@@ -26,10 +26,10 @@ if errorlevel 2 goto cancelled
 
 echo.
 echo [1/4] Stopping the program...
-taskkill /f /im deadlock-server-picker.exe >nul 2>&1
+taskkill /f /im s2e-server-picker.exe >nul 2>&1
 
 echo [2/4] Removing firewall rules...
-powershell -NoProfile -Command "Get-NetFirewallRule -DisplayName 'DeadlockServerPicker_*' -ErrorAction SilentlyContinue | Remove-NetFirewallRule"
+powershell -NoProfile -Command "Get-NetFirewallRule -DisplayName 'S2eServerPicker_*' -ErrorAction SilentlyContinue | Remove-NetFirewallRule"
 
 echo [3/4] Removing shortcuts...
 powershell -NoProfile -Command "foreach ($f in 'Desktop','Programs') { Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath($f)) '%APP_NAME%.lnk') -Force -ErrorAction SilentlyContinue }"

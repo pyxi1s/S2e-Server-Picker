@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
     if (!dsp::FirewallManager::IsElevated()) {
         std::fprintf(stderr,
-                     "Deadlock Server Picker needs administrator/root privileges.\n"
+                     "S2e Server Picker needs administrator/root privileges.\n"
                      "Requesting elevation...\n");
         if (dsp::FirewallManager::RelaunchElevated(argc, argv)) {
             return 0;

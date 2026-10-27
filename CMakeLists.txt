@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(DeadlockServerPicker
+project(S2eServerPicker
     VERSION 0.1.0
-    DESCRIPTION "TUI tool to block/allow Deadlock server regions via the OS firewall"
+    DESCRIPTION "TUI tool to block/allow S2e server regions via the OS firewall"
     LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -33,7 +33,7 @@ FetchContent_Declare(ftxui
 )
 FetchContent_MakeAvailable(ftxui)
 
-add_executable(deadlock-server-picker
+add_executable(s2e-server-picker
     src/main.cpp
     src/firewall.cpp
     src/firewall.hpp
@@ -46,7 +46,7 @@ add_executable(deadlock-server-picker
 
 find_package(Threads REQUIRED)
 
-target_link_libraries(deadlock-server-picker
+target_link_libraries(s2e-server-picker
     PRIVATE
         Threads::Threads
         ftxui::screen
@@ -55,17 +55,17 @@ target_link_libraries(deadlock-server-picker
 )
 
 if(WIN32)
-    target_link_libraries(deadlock-server-picker PRIVATE advapi32 shell32)
-    target_compile_definitions(deadlock-server-picker PRIVATE
+    target_link_libraries(s2e-server-picker PRIVATE advapi32 shell32)
+    target_compile_definitions(s2e-server-picker PRIVATE
         NOMINMAX WIN32_LEAN_AND_MEAN _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(MSVC)
-    target_compile_options(deadlock-server-picker PRIVATE /W4 /utf-8)
+    target_compile_options(s2e-server-picker PRIVATE /W4 /utf-8)
 else()
-    target_compile_options(deadlock-server-picker PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(s2e-server-picker PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 if(MINGW)
-    target_link_options(deadlock-server-picker PRIVATE -static)
+    target_link_options(s2e-server-picker PRIVATE -static)
 endif()

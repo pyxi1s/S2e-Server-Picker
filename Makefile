@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 GENERATOR ?=
 JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
-TARGET := deadlock-server-picker
+TARGET := s2e-server-picker
 
 CMAKE_GEN := $(if $(GENERATOR),-G "$(GENERATOR)",)
 

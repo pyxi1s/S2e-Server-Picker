@@ -65,7 +65,7 @@ def load(path):
     if path:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
-    req = urllib.request.Request(URL, headers={"User-Agent": "deadlock-server-picker/0.2"})
+    req = urllib.request.Request(URL, headers={"User-Agent": "s2e-server-picker/0.2"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.load(resp)
 
@@ -112,7 +112,7 @@ def build_block(pops):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Generate Deadlock relay IPs for src/servers.hpp")
+    ap = argparse.ArgumentParser(description="Generate S2e relay IPs for src/servers.hpp")
     ap.add_argument("--input", help="read a saved SDR JSON file instead of downloading")
     ap.add_argument("--write", action="store_true", help=f"rewrite {HEADER}")
     args = ap.parse_args()

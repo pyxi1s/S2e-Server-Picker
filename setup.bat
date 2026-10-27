@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Deadlock Server Picker - Setup
+title S2e Server Picker - Setup
 
 set "PAUSE_CMD=pause"
 if /i "%~1"=="--no-pause" set "PAUSE_CMD=rem"
@@ -10,7 +10,7 @@ set "EXTRA_PATH="
 set "NO_PYTHON="
 
 echo ============================================================
-echo   Deadlock Server Picker - one-click setup
+echo   S2e Server Picker - one-click setup
 echo ============================================================
 
 echo.
@@ -141,18 +141,18 @@ echo       will not work until you run:  python tools\update_servers.py --write
 call build.bat build
 if errorlevel 1 goto fail_build
 
-set "EXE=build\deadlock-server-picker.exe"
-if exist "build\Release\deadlock-server-picker.exe" set "EXE=build\Release\deadlock-server-picker.exe"
+set "EXE=build\s2e-server-picker.exe"
+if exist "build\Release\s2e-server-picker.exe" set "EXE=build\Release\s2e-server-picker.exe"
 for %%I in ("%EXE%") do set "EXE_FULL=%%~fI"
 
-set "INSTALL_DIR=C:\deadlock_server_picker"
+set "INSTALL_DIR=C:\s2e_server_picker"
 echo.
 echo Installing to %INSTALL_DIR%...
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
-copy /y "%EXE_FULL%" "%INSTALL_DIR%\deadlock-server-picker.exe" >nul
+copy /y "%EXE_FULL%" "%INSTALL_DIR%\s2e-server-picker.exe" >nul
 if errorlevel 1 goto fail_install
 copy /y uninstall.bat "%INSTALL_DIR%\uninstall.bat" >nul
-set "EXE=%INSTALL_DIR%\deadlock-server-picker.exe"
+set "EXE=%INSTALL_DIR%\s2e-server-picker.exe"
 
 echo.
 echo Creating Desktop and Start Menu shortcuts...

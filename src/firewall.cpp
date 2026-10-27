@@ -73,7 +73,7 @@ OperationResult CheckPreconditions(const Region& r, bool need_ranges) {
 
 constexpr size_t kChunkSize = 50;
 
-std::string RuleName(const Region& r) { return "DeadlockServerPicker_" + r.id; }
+std::string RuleName(const Region& r) { return "S2eServerPicker_" + r.id; }
 
 void DeleteRules(const Region& r) {
     RunCommand("netsh advfirewall firewall delete rule name=\"" + RuleName(r) + "\"");
@@ -193,7 +193,7 @@ std::vector<bool> QueryBlockedImpl(const std::vector<Region>& regions) {
 
 #elif defined(__APPLE__)
 
-constexpr const char* kAnchorRoot = "deadlock_picker";
+constexpr const char* kAnchorRoot = "s2e_picker";
 
 std::string AnchorName(const Region& r) { return std::string(kAnchorRoot) + "/" + r.id; }
 
@@ -221,7 +221,7 @@ OperationResult EnsureAnchorHooked() {
     if (!in) return {false, "cannot read /etc/pf.conf"};
     std::stringstream ss;
     ss << in.rdbuf();
-    ss << "\n# Added by Deadlock Server Picker\nanchor \"" << kAnchorRoot << "/*\"\n";
+    ss << "\n# Added by S2e Server Picker\nanchor \"" << kAnchorRoot << "/*\"\n";
 
     const std::string tmp = WriteTempFile(ss.str());
     if (tmp.empty()) return {false, "cannot create temporary pf.conf"};
@@ -317,7 +317,7 @@ bool FirewallManager::RelaunchElevated(int argc, char** argv) {
     const DWORD wt_len = SearchPathW(nullptr, L"wt.exe", nullptr, MAX_PATH, wt_path, nullptr);
     if (wt_len > 0 && wt_len < MAX_PATH) {
         const std::wstring params =
-            L"new-tab --title \"Deadlock Server Picker\" \"" + path + L"\"";
+            L"new-tab --title \"S2e Server Picker\" \"" + path + L"\"";
         SHELLEXECUTEINFOW wt{};
         wt.cbSize = sizeof(wt);
         wt.lpVerb = L"runas";

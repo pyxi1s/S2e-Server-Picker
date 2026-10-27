@@ -1,6 +1,6 @@
-# Deadlock Server Picker
+# S2e Server Picker
 
-Pick which Deadlock server locations you connect to, right from your terminal.
+Pick which S2e server locations you connect to, right from your terminal.
 
 It blocks or allows the game's relay IPs through your OS firewall and shows live ping for every location, so you can cut the laggy ones and keep the good one. No game files touched, no injection, just firewall rules.
 
@@ -36,10 +36,10 @@ setup.bat
 
 Installs whatever is missing through `winget` (CMake, Git, MinGW, Python), pulls FTXUI, fetches the real server IPs, builds the app and drops shortcuts on your Desktop and Start Menu. Add `--no-pause` if you don't want the final pause.
 
-The built program is copied to `C:\deadlock_server_picker`, so it keeps working even if you delete the source folder. Both shortcuts point there, run as administrator and open in Windows Terminal when it's installed (otherwise a regular console). To recreate them later:
+The built program is copied to `C:\s2e_server_picker`, so it keeps working even if you delete the source folder. Both shortcuts point there, run as administrator and open in Windows Terminal when it's installed (otherwise a regular console). To recreate them later:
 
 ```bat
-powershell -ExecutionPolicy Bypass -File tools\create_shortcuts.ps1 -Exe C:\deadlock_server_picker\deadlock-server-picker.exe
+powershell -ExecutionPolicy Bypass -File tools\create_shortcuts.ps1 -Exe C:\s2e_server_picker\s2e-server-picker.exe
 ```
 
 ### Linux / macOS
@@ -90,7 +90,7 @@ The repo ships with placeholder ranges (`192.0.2.0/28`, a documentation-only blo
 python3 tools/update_servers.py --write
 ```
 
-It reads Valve's Steam Datagram Relay config for Deadlock (AppID 1422450) and rewrites the region list in `src/servers.hpp`. Rebuild afterwards. Relay IPs change now and then, so if blocking or ping stops working, rerun the script and rebuild.
+It reads Valve's Steam Datagram Relay config for S2e (AppID 1422450) and rewrites the region list in `src/servers.hpp`. Rebuild afterwards. Relay IPs change now and then, so if blocking or ping stops working, rerun the script and rebuild.
 
 If the download fails, save the JSON from the URL the script prints and feed it in:
 
@@ -108,14 +108,14 @@ Each location gets its own rule set named after its POP code, so rules can be ch
 
 | OS | Mechanism |
 | --- | --- |
-| Windows | Outbound block rules named `DeadlockServerPicker_<id>` via `netsh advfirewall` |
+| Windows | Outbound block rules named `S2eServerPicker_<id>` via `netsh advfirewall` |
 | Linux | A chain `DLPICK_<ID>` hooked into `OUTPUT` via `iptables` |
-| macOS | A sub-anchor `deadlock_picker/<id>` via `pfctl` |
+| macOS | A sub-anchor `s2e_picker/<id>` via `pfctl` |
 
 Good to know:
 
 - Rules are outbound only, and on Linux/macOS they don't survive a reboot.
-- On macOS the app adds an `anchor "deadlock_picker/*"` line to a copy of `/etc/pf.conf` the first time it blocks something. If you run a custom pf ruleset, add that line yourself.
+- On macOS the app adds an `anchor "s2e_picker/*"` line to a copy of `/etc/pf.conf` the first time it blocks something. If you run a custom pf ruleset, add that line yourself.
 - Rules from older versions used different ids (`sea`, `eas`, `na`, `eu`, `sa`, `oce`), so reset those with the old version first.
 
 ## Building by hand
@@ -142,16 +142,16 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-The binary ends up at `build/deadlock-server-picker` (or `build\Release\deadlock-server-picker.exe` with Visual Studio).
+The binary ends up at `build/s2e-server-picker` (or `build\Release\s2e-server-picker.exe` with Visual Studio).
 
 ## Uninstall
 
-**Windows:** run `C:\deadlock_server_picker\uninstall.bat` (or `uninstall.bat` from the source folder). It asks for admin rights, then:
+**Windows:** run `C:\s2e_server_picker\uninstall.bat` (or `uninstall.bat` from the source folder). It asks for admin rights, then:
 
 - stops the program if it's running
-- removes every firewall rule this app created (`DeadlockServerPicker_*`)
+- removes every firewall rule this app created (`S2eServerPicker_*`)
 - removes the Desktop and Start Menu shortcuts
-- deletes `C:\deadlock_server_picker`
+- deletes `C:\s2e_server_picker`
 
 Your source folder stays untouched.
 

@@ -117,7 +117,7 @@ else
 fi
 
 if [ "$SKIP_SERVERS" -eq 0 ]; then
-    step "Fetching Deadlock server IPs"
+    step "Fetching S2e server IPs"
     if python3 tools/update_servers.py --write; then
         ok "src/servers.hpp updated with real relay IPs"
     else
@@ -131,12 +131,12 @@ JOBS="$( (nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2) | head -
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j "$JOBS"
 
-BIN="$PWD/build/deadlock-server-picker"
+BIN="$PWD/build/s2e-server-picker"
 [ -x "$BIN" ] || die "Build finished but $BIN was not found"
 ok "Built: $BIN"
 
 echo
-echo "Run it with:  ./build/deadlock-server-picker   (it asks for sudo itself)"
+echo "Run it with:  ./build/s2e-server-picker   (it asks for sudo itself)"
 
 if [ "$RUN_MODE" = "ask" ] && [ -t 0 ] && [ -t 1 ]; then
     read -r -p "Launch now? [y/N] " ans || ans=""
