@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
         }
 
         return vbox({
-            text(" DEADLOCK SERVER PICKER ") | bold | hcenter,
+            text(" S2E SERVER PICKER ") | bold | hcenter,
             separator(),
             banner,
             hbox({

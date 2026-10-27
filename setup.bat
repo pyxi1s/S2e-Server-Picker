@@ -61,6 +61,11 @@ echo       Using a newer MinGW-w64 build instead.
 :compiler_install
 call :find_winlibs
 if defined MINGW_BIN goto compiler_path
+echo       Downloading MinGW-w64 directly (one time, ~250 MB, progress shown)...
+powershell -NoProfile -ExecutionPolicy Bypass -File "tools\get_mingw.ps1" -Dest "%LOCALAPPDATA%\s2e-toolchain"
+call :find_winlibs
+if defined MINGW_BIN goto compiler_path
+echo       Direct download failed. Falling back to winget (slower)...
 call :winget_install BrechtSanders.WinLibs.POSIX.UCRT "MinGW-w64 (WinLibs)"
 if errorlevel 1 goto fail
 call :find_winlibs
@@ -138,7 +143,18 @@ echo       [warn] Could not update server IPs. Placeholders stay in place, so pi
 echo       will not work until you run:  python tools\update_servers.py --write
 
 :build
-call build.bat build
+set "GEN_ARGS="
+if not defined VSPATH set GEN_ARGS=-G "MinGW Makefiles"
+if not exist build\CMakeCache.txt goto configure
+if defined VSPATH (
+    findstr /c:"MinGW Makefiles" /c:"NMake Makefiles" build\CMakeCache.txt >nul 2>nul && rmdir /s /q build
+) else (
+    findstr /c:"CMAKE_GENERATOR:INTERNAL=MinGW Makefiles" build\CMakeCache.txt >nul 2>nul || rmdir /s /q build
+)
+:configure
+cmake -S . -B build %GEN_ARGS% -DCMAKE_BUILD_TYPE=Release
+if errorlevel 1 goto fail_build
+cmake --build build --config Release --parallel
 if errorlevel 1 goto fail_build
 
 set "EXE=build\s2e-server-picker.exe"
@@ -194,7 +210,9 @@ exit /b 0
 
 :find_winlibs
 set "MINGW_BIN="
-for /d %%D in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\BrechtSanders.WinLibs*") do if exist "%%~D\mingw64\bin\g++.exe" set "MINGW_BIN=%%~D\mingw64\bin"
+if exist "%LOCALAPPDATA%\s2e-toolchain\mingw64\.ok" set "MINGW_BIN=%LOCALAPPDATA%\s2e-toolchain\mingw64\bin"
+if defined MINGW_BIN exit /b 0
+for /d %%D in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\BrechtSanders.WinLibs*") do if exist "%%~D\mingw64\bin\g++.exe" if exist "%%~D\mingw64\bin\mingw32-make.exe" set "MINGW_BIN=%%~D\mingw64\bin"
 exit /b 0
 
 :find_python

@@ -126,7 +126,7 @@ std::vector<bool> QueryBlockedImpl(const std::vector<Region>& regions) {
 #elif defined(__linux__)
 
 std::string ChainName(const Region& r) {
-    std::string n = "DLPICK_";
+    std::string n = "S2EPICKER_";
     for (unsigned char c : r.id) n.push_back(static_cast<char>(std::toupper(c)));
     return n;
 }
@@ -198,7 +198,7 @@ constexpr const char* kAnchorRoot = "s2e_picker";
 std::string AnchorName(const Region& r) { return std::string(kAnchorRoot) + "/" + r.id; }
 
 std::string WriteTempFile(const std::string& content) {
-    char path[] = "/tmp/dlpicker.XXXXXX";
+    char path[] = "/tmp/s2e_picker.XXXXXX";
     const int fd = mkstemp(path);
     if (fd < 0) return "";
     const char* data = content.data();

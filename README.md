@@ -1,4 +1,4 @@
-# Souce 2 Server Picker
+# S2e Server Picker
 
 Pick which S2e server locations you connect to, right from your terminal.
 
@@ -109,7 +109,7 @@ Each location gets its own rule set named after its POP code, so rules can be ch
 | OS | Mechanism |
 | --- | --- |
 | Windows | Outbound block rules named `S2eServerPicker_<id>` via `netsh advfirewall` |
-| Linux | A chain `DLPICK_<ID>` hooked into `OUTPUT` via `iptables` |
+| Linux | A chain `S2EPICKER_<ID>` hooked into `OUTPUT` via `iptables` |
 | macOS | A sub-anchor `s2e_picker/<id>` via `pfctl` |
 
 Good to know:
@@ -129,17 +129,11 @@ make debug      # Debug build in build-debug/
 make clean
 ```
 
-On Windows:
-
-```bat
-build.bat [build|debug|run|rebuild|clean]
-```
-
-Set `GENERATOR` to force a CMake generator (e.g. `Ninja` or `MinGW Makefiles`). Plain CMake works too:
+On Windows, `setup.bat` builds it for you. To build by hand, use plain CMake (add `-G "MinGW Makefiles"` if you use MinGW):
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+cmake --build build --parallel
 ```
 
 The binary ends up at `build/s2e-server-picker` (or `build\Release\s2e-server-picker.exe` with Visual Studio).
@@ -155,7 +149,7 @@ The binary ends up at `build/s2e-server-picker` (or `build\Release\s2e-server-pi
 
 Your source folder stays untouched.
 
-**Linux / macOS:** no installer. Hit **Reset All Rules** in the app, then delete the folder.
+**Linux / macOS:** run `./uninstall.sh` (it asks for sudo). It stops the program, removes every firewall rule this app created (`S2EPICKER_*` chains on Linux, `s2e_picker/*` anchors on macOS) and deletes `build/`. Add `-y` to skip the prompt, or `--purge` to also delete `deps/`. Your source files stay untouched. On macOS, packet filtering stays enabled if the app turned it on.
 
 ## Project layout
 
@@ -171,5 +165,6 @@ tools/
   create_shortcuts.ps1    Creates the Desktop and Start Menu shortcuts (Windows)
 setup.bat / setup.sh  One-click setup
 uninstall.bat         Windows uninstaller
-build.bat / Makefile / CMakeLists.txt
+uninstall.sh          Linux / macOS uninstaller
+Makefile / CMakeLists.txt
 ```
