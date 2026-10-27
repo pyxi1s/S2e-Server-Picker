@@ -1,4 +1,4 @@
-# S2e Server Picker
+# Souce 2 Server Picker
 
 Pick which S2e server locations you connect to, right from your terminal.
 
